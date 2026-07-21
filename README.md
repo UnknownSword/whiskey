@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 # Whiskey
 
 A terminal-based fantasy shop and idle mining game built with C++20 and ncurses.
