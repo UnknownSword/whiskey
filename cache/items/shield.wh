@@ -1,0 +1,16 @@
+("shield"){
+	("price"){
+		["low"] = 800;
+		["high"] = 1500;
+	}
+	["name-color"] = cyan;
+	["art"] = "assets/arts/items/shield.art";
+	["description"] = "assets/descriptions/shield.txt";
+	# shield protects you in battles
+	# the art shows a classic round shield
+	# price ranges from 800 to 1500 coins
+}
+
+# shield is a defensive item
+# it reduces incoming damage
+# good for tank builds

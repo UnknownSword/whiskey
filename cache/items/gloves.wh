@@ -1,0 +1,16 @@
+("gloves"){
+	("price"){
+		["low"] = 400;
+		["high"] = 900;
+	}
+	["name-color"] = orange;
+	["art"] = "assets/arts/items/gloves.art";
+	["description"] = "assets/descriptions/gloves.txt";
+	# leather gloves for better grip
+	# improves crafting success rate
+	# protects hands in combat
+}
+
+# gloves boost your dexterity
+# better for precise work
+# cheap but useful upgrade

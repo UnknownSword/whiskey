@@ -1,0 +1,16 @@
+("potion"){
+	("price"){
+		["low"] = 100;
+		["high"] = 300;
+	}
+	["name-color"] = red;
+	["art"] = "assets/arts/items/potion.art";
+	["description"] = "assets/descriptions/potion.txt";
+	# healing potion - restores health
+	# cheap and essential for adventuring
+	# buy in bulk for long journeys
+}
+
+# potion is a consumable item
+# restores health when drinking
+# keep some in your bag always

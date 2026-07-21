@@ -1,0 +1,10 @@
+("sword"){
+	("price"){
+		["low"] = 1000;
+		["high"] = 2000;
+	}
+	["name-color"] = red;
+	["art"] = "assets/arts/items/sword.art";
+	["description"] = "assets/descriptions/sword.txt";
+}
+

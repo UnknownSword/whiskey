@@ -1,0 +1,17 @@
+("whiskey"){
+	("price"){
+		["low"] = 1000000;
+		["high"] = 1000000;
+	}
+	["name-color"] = yellow;
+	["art"] = "assets/arts/items/whiskey.art";
+	["description"] = "assets/descriptions/whiskey.txt";
+	# the legendary whiskey bottle
+	# most expensive item in the game
+	# fixed price - no negotiation
+	# this is the ultimate treasure
+}
+
+# whiskey is the rarest item
+# only for the wealthiest players
+# worth more than anything else

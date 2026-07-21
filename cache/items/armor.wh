@@ -1,0 +1,16 @@
+("armor"){
+	("price"){
+		["low"] = 1500;
+		["high"] = 3000;
+	}
+	["name-color"] = blue;
+	["art"] = "assets/arts/items/armor.art";
+	["description"] = "assets/descriptions/armor.txt";
+	# heavy armor for maximum protection
+	# reduces physical damage taken
+	# slows movement speed slightly
+}
+
+# armor is essential for melee fighters
+# provides the best physical defense
+# can be enchanted for bonus effects

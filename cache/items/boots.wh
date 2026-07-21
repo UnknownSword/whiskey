@@ -1,0 +1,16 @@
+("boots"){
+	("price"){
+		["low"] = 500;
+		["high"] = 1200;
+	}
+	["name-color"] = green;
+	["art"] = "assets/arts/items/boots.art";
+	["description"] = "assets/descriptions/boots.txt";
+	# swift boots for faster travel
+	# increases movement speed
+	# light and comfortable
+}
+
+# boots improve your agility
+# better boots = faster travel
+# essential for rogues and thieves

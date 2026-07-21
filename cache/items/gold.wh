@@ -1,0 +1,9 @@
+("gold"){
+	("price"){
+		["low"] = 100;
+		["high"] = 500;
+	}
+	["name-color"] = yellow;
+	["art"] = "assets/arts/items/gold.art";
+	["description"] = "assets/descriptions/gold.txt";
+}

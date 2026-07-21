@@ -1,0 +1,16 @@
+("bow"){
+	("price"){
+		["low"] = 900;
+		["high"] = 1800;
+	}
+	["name-color"] = brown;
+	["art"] = "assets/arts/items/bow.art";
+	["description"] = "assets/descriptions/bow.txt";
+	# ranged weapon for hunters
+	# deals damage from a distance
+	# requires arrows to use
+}
+
+# bow is a ranged weapon
+# best for hunting and scouting
+# pairs well with quiver items

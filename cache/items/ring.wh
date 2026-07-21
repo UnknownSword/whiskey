@@ -1,0 +1,16 @@
+("ring"){
+	("price"){
+		["low"] = 2000;
+		["high"] = 5000;
+	}
+	["name-color"] = yellow;
+	["art"] = "assets/arts/items/ring.art";
+	["description"] = "assets/descriptions/ring.txt";
+	# enchanted ring with special powers
+	# boosts various stats depending on type
+	# can stack with other accessories
+}
+
+# rings are powerful accessories
+# each type grants different bonuses
+# collect them all for set bonuses

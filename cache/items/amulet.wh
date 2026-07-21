@@ -1,0 +1,16 @@
+("amulet"){
+	("price"){
+		["low"] = 3000;
+		["high"] = 8000;
+	}
+	["name-color"] = magenta;
+	["art"] = "assets/arts/items/amulet.art";
+	["description"] = "assets/descriptions/amulet.txt";
+	# mystical amulet with magical powers
+	# wide price range - lucky find possible
+	# boosts magic stats
+}
+
+# amulet is a magical accessory
+# increases spell power and defense
+# rare drop from dungeon bosses

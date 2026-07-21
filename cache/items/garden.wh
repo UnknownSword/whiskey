@@ -1,0 +1,16 @@
+("garden"){
+	("price"){
+		["low"] = 4000;
+		["high"] = 6500;
+	}
+	["name-color"] = green;
+	["art"] = "assets/arts/items/garden.art";
+	["description"] = "assets/descriptions/garden.txt";
+	# enchanted garden plot
+	# grows herbs and potions over time
+	# passive income generator
+}
+
+# garden provides passive resources
+# plant seeds and harvest later
+# essential for alchemists

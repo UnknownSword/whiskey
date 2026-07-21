@@ -1,0 +1,16 @@
+("helmet"){
+	("price"){
+		["low"] = 700;
+		["high"] = 1400;
+	}
+	["name-color"] = purple;
+	["art"] = "assets/arts/items/helmet.art";
+	["description"] = "assets/descriptions/helmet.txt";
+	# protective headgear
+	# reduces headshot damage
+	# some helmets have visors
+}
+
+# helmet protects your head
+# critical for survival in battle
+# can be customized with gems

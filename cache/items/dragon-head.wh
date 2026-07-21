@@ -1,0 +1,16 @@
+("dragon head"){
+	("price"){
+		["low"] = 10000;
+		["high"] = 15000;
+	}
+	["name-color"] = red;
+	["art"] = "assets/arts/items/dragon-head.art";
+	["description"] = "assets/descriptions/dragon-head.txt";
+	# trophy from a slain dragon
+	# extremely valuable and rare
+	# proves your worth as a warrior
+}
+
+# dragon head is a prestige item
+# only drops from dragon bosses
+# increases reputation significantly
