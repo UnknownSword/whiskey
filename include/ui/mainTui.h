@@ -77,6 +77,12 @@ private:
 	int login_field;
 	bool login_editing;
 
+	// Login user list
+	std::vector<std::string> login_user_list;
+	int login_user_selected;
+	bool login_creating;
+	std::string login_new_user;
+
 	// Password input
 	std::string new_pass;
 	bool pass_editing;
@@ -144,7 +150,11 @@ private:
 
 	void cli_execute(const std::string& line);
 
+	void load_user_list();
+
 	void do_login();
+	void do_create_user();
+	void do_delete_user();
 	void do_change_password();
 	void open_shop();
 	void do_logout();

@@ -30,6 +30,7 @@ MainTui::MainTui()
 	  sidebar_active(true), bag_selected(0), show_help(false),
 	  cli_active(false), cli_cursor(0), cli_scroll(0), cli_editing(false),
 	  coins(0), login_field(0), login_editing(false), pass_editing(false),
+	  login_user_selected(0), login_creating(false),
 	  miner_menu_selected(0)
 {
 }
@@ -162,6 +163,26 @@ void MainTui::load_item_defs() {
 	}
 }
 
+void MainTui::load_user_list() {
+	login_user_list.clear();
+	std::filesystem::path cache_dir("cache");
+	if (!std::filesystem::exists(cache_dir) || !std::filesystem::is_directory(cache_dir))
+		return;
+
+	for (auto& entry : std::filesystem::directory_iterator(cache_dir)) {
+		if (!entry.is_directory()) continue;
+		std::string name = entry.path().filename().string();
+		if (name == "items" || name == "shop") continue;
+		std::string data_file = entry.path().string() + "/data.wh";
+		if (std::filesystem::exists(data_file))
+			login_user_list.push_back(name);
+	}
+
+	std::sort(login_user_list.begin(), login_user_list.end());
+	if (login_user_selected >= (int)login_user_list.size())
+		login_user_selected = 0;
+}
+
 // ============================================================
 // Drawing
 // ============================================================
@@ -283,6 +304,12 @@ void MainTui::draw_status() {
 		help_text = "[ESC] Deactivate  [Enter] Execute  [!] Close terminal";
 	else if (cli_active)
 		help_text = "[!] Close terminal  [Enter] Activate  [q] Exit";
+	else if (login_editing)
+		help_text = "[Enter] Login  [Esc] Back  [?] Help";
+	else if (login_creating)
+		help_text = "[Tab] Field  [Enter] Create  [Esc] Cancel  [?] Help";
+	else if (current_view == MainView::Login)
+		help_text = "[UP/DOWN] Select  [Enter] Login  [d] Delete  [?] Help";
 	else
 		help_text = "[ESC/RIGHT] Back  [!] Terminal  [?] Help  [q] Exit";
 
@@ -323,55 +350,159 @@ void MainTui::draw_all() {
 // ============================================================
 
 void MainTui::draw_login_view() {
+	int max_y = getmaxy(content);
 	int max_x = getmaxx(content);
+
+	highlight_color.enable(content);
+	std::string title = "-- Select User --";
+	int tx = (max_x - (int)title.size()) / 2;
+	mvwprintw(content, 1, tx, "%s", title.c_str());
+	highlight_color.disable(content);
 
 	int start_y = 3;
 	int field_w = 30;
 	int field_x = (max_x - field_w) / 2;
 
-	highlight_color.enable(content);
-	std::string title = "-- Login --";
-	int tx = (max_x - (int)title.size()) / 2;
-	mvwprintw(content, start_y, tx, "%s", title.c_str());
-	highlight_color.disable(content);
+	if (login_creating) {
+		highlight_color.enable(content);
+		std::string cr_title = "-- Create New User --";
+		int crx = (max_x - (int)cr_title.size()) / 2;
+		mvwprintw(content, start_y, crx, "%s", cr_title.c_str());
+		highlight_color.disable(content);
 
-	start_y += 3;
-	label_color.enable(content);
-	mvwprintw(content, start_y, field_x, "Username:");
-	label_color.disable(content);
+		start_y += 2;
+		label_color.enable(content);
+		mvwprintw(content, start_y, field_x, "Username:");
+		label_color.disable(content);
 
-	start_y++;
-	bool user_active = (login_field == 0 && login_editing);
-	ScreenColor& ucol = user_active ? input_active_color : input_color;
-	ucol.enable(content);
-	std::string user_display = login_user;
-	if (user_active) user_display += "_";
-	int ulen = (int)user_display.size();
-	if (ulen < field_w) user_display += std::string(field_w - ulen, ' ');
-	else user_display = user_display.substr(0, field_w);
-	mvwprintw(content, start_y, field_x, "%s", user_display.c_str());
-	ucol.disable(content);
+		start_y++;
+		bool user_active = (login_field == 0);
+		ScreenColor& ucol = user_active ? input_active_color : input_color;
+		ucol.enable(content);
+		std::string user_display = login_new_user;
+		if (user_active) user_display += "_";
+		int ulen = (int)user_display.size();
+		if (ulen < field_w) user_display += std::string(field_w - ulen, ' ');
+		else user_display = user_display.substr(0, field_w);
+		mvwprintw(content, start_y, field_x, "%s", user_display.c_str());
+		ucol.disable(content);
 
-	start_y += 3;
-	label_color.enable(content);
-	mvwprintw(content, start_y, field_x, "Password:");
-	label_color.disable(content);
+		start_y += 2;
+		label_color.enable(content);
+		mvwprintw(content, start_y, field_x, "Password (optional):");
+		label_color.disable(content);
 
-	start_y++;
-	bool pass_active = (login_field == 1 && login_editing);
-	ScreenColor& pcol = pass_active ? input_active_color : input_color;
-	pcol.enable(content);
-	std::string pass_display(login_pass.size(), '*');
-	if (pass_active) pass_display += "_";
-	int plen = (int)pass_display.size();
-	if (plen < field_w) pass_display += std::string(field_w - plen, ' ');
-	else pass_display = pass_display.substr(0, field_w);
-	mvwprintw(content, start_y, field_x, "%s", pass_display.c_str());
-	pcol.disable(content);
+		start_y++;
+		bool pass_active = (login_field == 1);
+		ScreenColor& pcol = pass_active ? input_active_color : input_color;
+		pcol.enable(content);
+		std::string pass_display(login_pass.size(), '*');
+		if (pass_active) pass_display += "_";
+		int plen = (int)pass_display.size();
+		if (plen < field_w) pass_display += std::string(field_w - plen, ' ');
+		else pass_display = pass_display.substr(0, field_w);
+		mvwprintw(content, start_y, field_x, "%s", pass_display.c_str());
+		pcol.disable(content);
 
-	start_y += 3;
+		start_y += 2;
+		status_color.enable(content);
+		std::string help = "[Tab] Field  [Enter] Create  [Esc] Cancel";
+		int hx = (max_x - (int)help.size()) / 2;
+		mvwprintw(content, start_y, hx > 0 ? hx : 0, "%s", help.c_str());
+		status_color.disable(content);
+		return;
+	}
+
+	if (login_editing) {
+		highlight_color.enable(content);
+		std::string pass_title = "-- Password for " + login_user + " --";
+		int ptx = (max_x - (int)pass_title.size()) / 2;
+		mvwprintw(content, start_y, ptx, "%s", pass_title.c_str());
+		highlight_color.disable(content);
+
+		start_y += 3;
+		label_color.enable(content);
+		mvwprintw(content, start_y, field_x, "Password:");
+		label_color.disable(content);
+
+		start_y++;
+		ScreenColor& pcol = input_active_color;
+		pcol.enable(content);
+		std::string pass_display(login_pass.size(), '*');
+		pass_display += "_";
+		int plen = (int)pass_display.size();
+		if (plen < field_w) pass_display += std::string(field_w - plen, ' ');
+		else pass_display = pass_display.substr(0, field_w);
+		mvwprintw(content, start_y, field_x, "%s", pass_display.c_str());
+		pcol.disable(content);
+
+		start_y += 3;
+		status_color.enable(content);
+		std::string help = "[Enter] Login  [Esc] Back";
+		int hx = (max_x - (int)help.size()) / 2;
+		mvwprintw(content, start_y, hx > 0 ? hx : 0, "%s", help.c_str());
+		status_color.disable(content);
+		return;
+	}
+
+	// User list mode
+	int list_x = 3;
+	int list_w = max_x - 6;
+	int list_top = start_y;
+	int list_bot = max_y - 4;
+	int visible = list_bot - list_top;
+	if (visible < 1) visible = 1;
+
+	// Total items: + Add User, users..., x Delete User
+	int total_items = 1 + (int)login_user_list.size();
+	bool has_delete = !login_user_list.empty();
+	if (has_delete) total_items++;
+
+	if (login_user_selected < 0) login_user_selected = 0;
+	if (login_user_selected >= total_items) login_user_selected = total_items - 1;
+
+	int scroll = 0;
+	if (login_user_selected >= visible)
+		scroll = login_user_selected - visible + 1;
+
+	for (int i = 0; i < visible && (scroll + i) < total_items; i++) {
+		int idx = scroll + i;
+		bool is_sel = (idx == login_user_selected);
+		ScreenColor& col = is_sel ? sidebar_selected_color : item_color;
+		col.enable(content);
+
+		std::string line;
+		if (idx == 0) {
+			line = "+ Add User";
+		} else if (idx <= (int)login_user_list.size()) {
+			line = "  " + login_user_list[idx - 1];
+		} else {
+			line = "x Delete User";
+		}
+
+		if (is_sel) {
+			line[0] = '>';
+		}
+
+		if ((int)line.size() < list_w) {
+			line += std::string(list_w - line.size(), ' ');
+		} else {
+			line = line.substr(0, list_w);
+		}
+
+		mvwprintw(content, list_top + i, list_x, "%s", line.c_str());
+		col.disable(content);
+	}
+
+	if (total_items == 0) {
+		status_color.enable(content);
+		mvwprintw(content, list_top, list_x, "(no users found)");
+		status_color.disable(content);
+	}
+
+	start_y = list_bot + 1;
 	status_color.enable(content);
-	std::string help = "[Tab] Field  [Enter] Login  [Esc] Cancel";
+	std::string help = "[UP/DOWN] Select  [Enter] Login  [?] Help  [q] Exit";
 	int hx = (max_x - (int)help.size()) / 2;
 	mvwprintw(content, start_y, hx > 0 ? hx : 0, "%s", help.c_str());
 	status_color.disable(content);
@@ -836,6 +967,8 @@ void MainTui::miner_buy_worker() {
 	coins -= cost;
 	bag.set_value("coins", coins);
 	bag.childs["miner"].set_value("workers", m_workers + 1);
+	if (m_workers == 0)
+		bag.childs["miner"].set_value("last_collect_time", (long long)time(nullptr));
 
 	std::string dir = "cache/" + username;
 	std::filesystem::create_directories(dir);
@@ -863,6 +996,8 @@ void MainTui::miner_sell_worker() {
 	coins += refund;
 	bag.set_value("coins", coins);
 	bag.childs["miner"].set_value("workers", m_workers - 1);
+	if (m_workers == 1)
+		bag.childs["miner"].set_value("last_collect_time", (long long)time(nullptr));
 
 	std::string dir = "cache/" + username;
 	std::filesystem::create_directories(dir);
@@ -1290,7 +1425,6 @@ void MainTui::draw_help_overlay() {
 
 	if (show_help) {
 		// Context-sensitive help
-		bool in_login = login_editing;
 		bool in_pass = pass_editing;
 
 		if (sidebar_active) {
@@ -1301,13 +1435,26 @@ void MainTui::draw_help_overlay() {
 			line("Enter", "Select / Open");
 			line("?", "Show this help");
 			line("q", "Quit");
-		} else if (in_login) {
-			mvwprintw(win, row, 3, "-- Login --");
+		} else if (login_creating) {
+			mvwprintw(win, row, 3, "-- Create User --");
 			row++;
 			line("Tab", "Switch field");
-			line("Enter", "Login / Next field");
+			line("Enter", "Create / Next field");
 			line("Backspace", "Delete char");
 			line("ESC", "Cancel");
+		} else if (login_editing) {
+			mvwprintw(win, row, 3, "-- Enter Password --");
+			row++;
+			line("Enter", "Login");
+			line("Backspace", "Delete char");
+			line("ESC", "Cancel");
+		} else if (current_view == MainView::Login) {
+			mvwprintw(win, row, 3, "-- Select User --");
+			row++;
+			line("UP / k", "Move up");
+			line("DOWN / j", "Move down");
+			line("Enter", "Select / Login");
+			line("d / D", "Delete user");
 		} else if (in_pass) {
 			mvwprintw(win, row, 3, "-- Change Password --");
 			row++;
@@ -1428,7 +1575,6 @@ void MainTui::do_login() {
 		uint64_t stored = std::stoull(check.get_value<std::string>("password"));
 		if (hash != stored) {
 			login_pass.clear();
-			login_field = 1;
 			return;
 		}
 	}
@@ -1445,6 +1591,62 @@ void MainTui::do_login() {
 	login_pass.clear();
 	login_field = 0;
 	login_editing = false;
+	login_creating = false;
+	login_new_user.clear();
+	login_user_selected = 0;
+}
+
+void MainTui::do_create_user() {
+	if (login_new_user.empty()) return;
+
+	// Check for invalid characters in username
+	for (char c : login_new_user) {
+		if (!std::isalnum(c) && c != '_' && c != '-') return;
+	}
+
+	std::string dir = "cache/" + login_new_user;
+	std::string path = dir + "/data.wh";
+
+	// Check if user already exists
+	if (std::filesystem::exists(path)) {
+		login_new_user.clear();
+		login_pass.clear();
+		login_field = 0;
+		return;
+	}
+
+	std::filesystem::create_directories(dir);
+
+	CacheData new_user;
+	if (!login_pass.empty()) {
+		uint64_t hash = random_seed(login_pass);
+		new_user.set_value("password", std::to_string(hash));
+	}
+	new_user.set_value("coins", "100");
+	new_user.cache_put(path);
+
+	login_creating = false;
+	login_new_user.clear();
+	login_pass.clear();
+	login_field = 0;
+	curs_set(0);
+
+	load_user_list();
+}
+
+void MainTui::do_delete_user() {
+	if (login_user_list.empty()) return;
+	if (login_user_selected <= 0 || login_user_selected > (int)login_user_list.size()) return;
+
+	std::string name = login_user_list[login_user_selected - 1];
+	std::string dir = "cache/" + name;
+
+	std::filesystem::remove_all(dir);
+
+	if (login_user_selected >= (int)login_user_list.size() && login_user_selected > 1)
+		login_user_selected--;
+
+	load_user_list();
 }
 
 void MainTui::do_change_password() {
@@ -1481,6 +1683,13 @@ void MainTui::do_logout() {
 	menu_selected = 0;
 	sidebar_active = true;
 	current_view = MainView::Login;
+	login_creating = false;
+	login_editing = false;
+	login_user.clear();
+	login_pass.clear();
+	login_new_user.clear();
+	login_field = 0;
+	load_user_list();
 }
 
 // ============================================================
@@ -1505,6 +1714,10 @@ void MainTui::handle_input(int key) {
 		return;
 	}
 
+	if (login_creating) {
+		handle_login_keys(key);
+		return;
+	}
 	if (login_editing) {
 		handle_login_keys(key);
 		return;
@@ -1545,11 +1758,15 @@ void MainTui::handle_sidebar_keys(int key) {
 
 			if (label == "Login") {
 				current_view = MainView::Login;
-				login_editing = true;
-				login_field = 0;
+				login_creating = false;
+				login_editing = false;
 				login_user.clear();
 				login_pass.clear();
-				curs_set(1);
+				login_new_user.clear();
+				login_field = 0;
+				load_user_list();
+				sidebar_active = false;
+				curs_set(0);
 			} else if (label == "Shop") {
 				open_shop();
 			} else if (label == "Workers") {
@@ -1605,6 +1822,12 @@ void MainTui::handle_content_keys(int key) {
 		return;
 	}
 
+	// Route login keys when in Login view
+	if (current_view == MainView::Login) {
+		handle_login_keys(key);
+		return;
+	}
+
 	switch (key) {
 		case 27: // ESC
 		case KEY_RIGHT:
@@ -1627,46 +1850,134 @@ void MainTui::handle_content_keys(int key) {
 }
 
 void MainTui::handle_login_keys(int key) {
-	switch (key) {
-		case '\t':
-		case KEY_BTAB:
-			login_field = (login_field + 1) % 2;
-			break;
-		case '\n':
-		case KEY_ENTER:
-			if (login_field == 1) {
+	if (login_creating) {
+		switch (key) {
+			case '\t':
+			case KEY_BTAB:
+				login_field = (login_field + 1) % 2;
+				break;
+			case '\n':
+			case KEY_ENTER:
+				if (login_field == 1) {
+					do_create_user();
+					curs_set(0);
+				} else {
+					login_field = 1;
+				}
+				break;
+			case 27: // ESC
+				login_creating = false;
+				login_new_user.clear();
+				login_pass.clear();
+				login_field = 0;
+				curs_set(0);
+				load_user_list();
+				break;
+			case KEY_BACKSPACE:
+			case 127:
+			case '\b':
+				if (login_field == 0 && !login_new_user.empty())
+					login_new_user.pop_back();
+				else if (login_field == 1 && !login_pass.empty())
+					login_pass.pop_back();
+				break;
+			default:
+				if (key >= 32 && key < 127) {
+					char c = (char)key;
+					if (login_field == 0)
+						login_new_user += c;
+					else
+						login_pass += c;
+				}
+				break;
+		}
+		return;
+	}
+
+	// Password entry mode (after selecting an existing user)
+	if (login_editing) {
+		switch (key) {
+			case '\n':
+			case KEY_ENTER:
 				do_login();
 				curs_set(0);
-			} else {
-				login_field = 1;
-			}
-			break;
+				break;
+			case 27: // ESC
+				login_editing = false;
+				login_pass.clear();
+				curs_set(0);
+				break;
+			case KEY_BACKSPACE:
+			case 127:
+			case '\b':
+				if (!login_pass.empty())
+					login_pass.pop_back();
+				break;
+			default:
+				if (key >= 32 && key < 127) {
+					login_pass += (char)key;
+				}
+				break;
+		}
+		return;
+	}
+
+	// User list browsing mode
+	int total_items = 1 + (int)login_user_list.size();
+	bool has_delete = !login_user_list.empty();
+	if (has_delete) total_items++;
+
+	switch (key) {
 		case 27: // ESC
-			login_editing = false;
-			login_user.clear();
-			login_pass.clear();
-			login_field = 0;
-			curs_set(0);
-			current_view = MainView::Login;
+		case KEY_RIGHT:
+			sidebar_active = true;
 			build_menu();
 			menu_selected = 0;
-			sidebar_active = true;
 			break;
-		case KEY_BACKSPACE:
-		case 127:
-		case '\b':
-			if (login_field == 0 && !login_user.empty())
-				login_user.pop_back();
-			else if (login_field == 1 && !login_pass.empty())
-				login_pass.pop_back();
+		case KEY_UP:
+		case 'k':
+			login_user_selected = (login_user_selected + total_items - 1) % total_items;
 			break;
-		default:
-			if (key >= 32 && key < 127) {
-				char c = (char)key;
-				if (login_field == 0)
-					login_user += c;
-				else
-					login_pass += c;
+		case KEY_DOWN:
+		case 'j':
+			login_user_selected = (login_user_selected + 1) % total_items;
+			break;
+		case '\n':
+		case KEY_ENTER: {
+			if (total_items == 0) break;
+			if (login_user_selected == 0) {
+				// "+ Add User"
+				login_creating = true;
+				login_new_user.clear();
+				login_pass.clear();
+				login_field = 0;
+				curs_set(1);
+			} else if (login_user_selected <= (int)login_user_list.size()) {
+				// Select existing user -> enter password
+				login_user = login_user_list[login_user_selected - 1];
+				// Check if user has a password
+				std::string path = "cache/" + login_user + "/data.wh";
+				CacheData check;
+				check.cache_get(path);
+				if (check.contains_value("password")) {
+					login_editing = true;
+					login_pass.clear();
+					curs_set(1);
+				} else {
+					// No password, login directly
+					do_login();
+				}
+			} else {
+				// "x Delete User"
+				do_delete_user();
+			}
+			break;
+		}
+		case 'd':
+		case 'D':
+			if (!login_user_list.empty() && login_user_selected > 0 &&
+				login_user_selected <= (int)login_user_list.size()) {
+				do_delete_user();
 			}
 			break;
 	}

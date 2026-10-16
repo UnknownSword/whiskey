@@ -52,7 +52,7 @@ bool tui_init(){
 	curs_set(0);
 	noecho();
 	keypad(stdscr, TRUE);
-	curs_set(0);
+	halfdelay(2);
 	return ret;
 }
 void tui_end(){

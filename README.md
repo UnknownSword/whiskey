@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
 # Whiskey
 
 A terminal-based fantasy shop and idle mining game built with C++20 and ncurses.
@@ -152,3 +154,15 @@ whiskey/
     ├── items/               # Item definitions (.wh)
     └── shop/                # Daily shop prices (generated)
 ```
+
+## License
+
+No license specified.
+=======
+# whiskey
+basic game for testing my offline daily shop algorithm
+>>>>>>> f738455d303404018a44b72f43a8538ec8c339e7
+=======
+# whiskey
+basic game for testing my offline daily shop algorithm
+>>>>>>> f738455d303404018a44b72f43a8538ec8c339e7

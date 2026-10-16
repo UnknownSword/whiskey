@@ -1,0 +1,31 @@
+["coins"] = 16332;
+["password"] = 18070218925354808771;
+("boots"){
+	["count"] = 1;
+}
+("bow"){
+	["count"] = 1;
+}
+("garden"){
+	["count"] = 2;
+}
+("gloves"){
+	["count"] = 1;
+}
+("gold"){
+	["count"] = 4576;
+}
+("helmet"){
+	["count"] = 2;
+}
+("miner"){
+	["gold_per_minute"] = 1;
+	["last_collect_time"] = 1789559124;
+	["level"] = 69;
+	["max_gold"] = 3500;
+	["max_workers"] = 345;
+	["workers"] = 97;
+}
+("potion"){
+	["count"] = 2;
+}

@@ -67,32 +67,35 @@ void MinerTui::destroy_windows() {
 }
 
 void MinerTui::load_miner_data() {
-	std::string path = "cache/" + current_user + "/data.wh";
-	CacheData data;
-	data.cache_get(path);
+	std::string user_path = "cache/" + current_user + "/data.wh";
+	CacheData userdata;
+	userdata.cache_get(user_path);
 
-	player_coins = data.contains_value("coins") ? data.get_value<int>("coins") : 100;
+	player_coins = userdata.contains_value("coins") ? userdata.get_value<int>("coins") : 100;
 
-	if (data.contains_child("gold")) {
-		CacheData& g = data.get_child("gold");
+	if (userdata.contains_child("gold")) {
+		CacheData& g = userdata.get_child("gold");
 		gold_in_bag = g.contains_value("count") ? g.get_value<int>("count") : 0;
 	} else {
 		gold_in_bag = 0;
 	}
 
-	if (data.contains_child("miner")) {
-		CacheData& m = data.get_child("miner");
-		level = m.contains_value("level") ? m.get_value<int>("level") : 1;
-		gold_per_minute = m.contains_value("gold_per_minute") ? m.get_value<int>("gold_per_minute") : 2;
-		max_workers = m.contains_value("max_workers") ? m.get_value<int>("max_workers") : 5;
-		workers = m.contains_value("workers") ? m.get_value<int>("workers") : 0;
-		max_gold = m.contains_value("max_gold") ? m.get_value<int>("max_gold") : 100;
-		last_collect_time = m.contains_value("last_collect_time") ? (time_t)m.get_value<long long>("last_collect_time") : time(nullptr);
+	std::string miner_path = "cache/" + current_user + "/miner.wh";
+	CacheData miner;
+	miner.cache_get(miner_path);
+
+	if (!miner.values.empty()) {
+		level = miner.contains_value("level") ? miner.get_value<int>("level") : 1;
+		gold_per_minute = miner.contains_value("gold_per_minute") ? miner.get_value<int>("gold_per_minute") : 2;
+		max_workers = miner.contains_value("max_workers") ? miner.get_value<int>("max_workers") : 5;
+		workers = miner.contains_value("workers") ? miner.get_value<int>("workers") : 1;
+		max_gold = miner.contains_value("max_gold") ? miner.get_value<int>("max_gold") : 100;
+		last_collect_time = miner.contains_value("last_collect_time") ? (time_t)miner.get_value<long long>("last_collect_time") : time(nullptr);
 	} else {
 		level = 1;
 		gold_per_minute = 2;
 		max_workers = 5;
-		workers = 0;
+		workers = 1;
 		max_gold = 100;
 		last_collect_time = time(nullptr);
 	}
@@ -101,26 +104,30 @@ void MinerTui::load_miner_data() {
 }
 
 void MinerTui::save_miner_data() {
-	std::string path = "cache/" + current_user + "/data.wh";
-	CacheData data;
-	data.cache_get(path);
+	std::string user_path = "cache/" + current_user + "/data.wh";
+	CacheData userdata;
+	userdata.cache_get(user_path);
 
-	data.set_value("coins", player_coins);
+	userdata.set_value("coins", player_coins);
 
 	if (gold_in_bag <= 0) {
-		data.childs.erase("gold");
+		userdata.childs.erase("gold");
 	} else {
-		data.childs["gold"].set_value("count", gold_in_bag);
+		userdata.childs["gold"].set_value("count", gold_in_bag);
 	}
 
-	data.childs["miner"].set_value("level", level);
-	data.childs["miner"].set_value("gold_per_minute", gold_per_minute);
-	data.childs["miner"].set_value("max_workers", max_workers);
-	data.childs["miner"].set_value("workers", workers);
-	data.childs["miner"].set_value("max_gold", max_gold);
-	data.childs["miner"].set_value("last_collect_time", (long long)last_collect_time);
+	userdata.cache_put(user_path);
 
-	data.cache_put(path);
+	std::string miner_path = "cache/" + current_user + "/miner.wh";
+	CacheData miner;
+	miner.set_value("level", level);
+	miner.set_value("gold_per_minute", gold_per_minute);
+	miner.set_value("max_workers", max_workers);
+	miner.set_value("workers", workers);
+	miner.set_value("max_gold", max_gold);
+	miner.set_value("last_collect_time", (long long)last_collect_time);
+
+	miner.cache_put(miner_path);
 }
 
 void MinerTui::calc_current_gold() {
@@ -139,11 +146,11 @@ void MinerTui::calc_current_gold() {
 }
 
 int MinerTui::worker_cost() {
-	return 50 * (workers + 1);
+	return (int)(pow(workers + 1, 1.2) * 50) + 3;
 }
 
 int MinerTui::level_up_cost() {
-	return level * 5;
+	return (int)(pow(1.2, level) * 5) + 3;
 }
 
 // ============================================================
@@ -442,7 +449,7 @@ void MinerTui::do_level_up() {
 
 	gold_in_bag -= cost;
 	level++;
-	gold_per_minute = (int)(gold_per_minute * 1.5);
+	gold_per_minute = (int)((gold_per_minute + 5) * 1.2);
 	if (gold_per_minute < 1) gold_per_minute = 1;
 	max_workers += 5;
 	max_gold += 50;
