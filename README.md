@@ -152,13 +152,3 @@ whiskey/
     ├── items/               # Item definitions (.wh)
     └── shop/                # Daily shop prices (generated)
 ```
-
-## License
-
-No license specified.
-=======
-# whiskey
-basic game for testing my offline daily shop algorithm
-=======
-# whiskey
-basic game for testing my offline daily shop algorithm
